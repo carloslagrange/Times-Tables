@@ -424,6 +424,10 @@
     <h1>⚡ Times Tables Trainer ⚡</h1>
     <div class="subtitle">Pick a table to practice</div>
     <div class="mode-toggle">
+      <button class="mode-btn" id="op-multiply-btn">✖️ Multiply</button>
+      <button class="mode-btn" id="op-divide-btn">➗ Divide</button>
+    </div>
+    <div class="mode-toggle">
       <button class="mode-btn" id="mode-multiple-btn">🔘 Multiple Choice</button>
       <button class="mode-btn" id="mode-fill-btn">✏️ Fill in the Blank</button>
     </div>
@@ -434,7 +438,11 @@
   <!-- ALL SCORES SCREEN -->
   <div id="allscores-screen" class="screen">
     <h1>🏆 High Scores</h1>
-    <div class="subtitle">Best time for each level, by mode</div>
+    <div class="subtitle" id="allscores-subtitle">Best time for each level, by mode</div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="scores-op-multiply-btn">✖️ Multiply</button>
+      <button class="mode-btn" id="scores-op-divide-btn">➗ Divide</button>
+    </div>
     <div class="scores-table-header">
       <span>Level</span>
       <span>Multiple Choice</span>
@@ -534,12 +542,26 @@
   const MON_NAMES = ['Pikachu','Charizard','Squirtle','Bulbasaur','Jolteon','Butterfree','Blastoise','Charmander','Psyduck','Gastly','Dratini','Starmie'];
   const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']; // tries each in order per image file
 
-  // Build the list of selectable levels: 1x through 12x, plus a mixed Master level.
+  // Build the selectable levels for both operations: 1 through 12, plus a mixed
+  // Master level each. Multiplication level ids are left exactly as they were so
+  // the leaderboards already saved in Firebase still line up; division uses its
+  // own 'div-' ids and therefore starts with its own fresh boards.
   const LEVELS = [];
   for (let i = 1; i <= 12; i++) {
-    LEVELS.push({ id: `table-${i}`, label: `${i}×`, title: `${i}× Table`, type: 'single', table: i });
+    LEVELS.push({ id: `table-${i}`, op: 'multiply', label: `${i}×`, title: `${i}× Table`, type: 'single', table: i });
   }
-  LEVELS.push({ id: 'master', label: 'Master Mix — All Tables', title: 'Master Mix', type: 'mixed' });
+  LEVELS.push({ id: 'master', op: 'multiply', label: 'Master Mix', title: 'Master Mix', type: 'mixed' });
+
+  for (let i = 1; i <= 12; i++) {
+    LEVELS.push({ id: `div-${i}`, op: 'divide', label: `÷${i}`, title: `Dividing by ${i}`, type: 'single', table: i });
+  }
+  LEVELS.push({ id: 'div-master', op: 'divide', label: 'Master Mix', title: 'Master Mix', type: 'mixed' });
+
+  const OPERATIONS = {
+    multiply: { id: 'multiply', symbol: '×', label: 'Multiply', masterLabel: '🌟 Master Mix (All Tables)' },
+    divide:   { id: 'divide',   symbol: '÷', label: 'Divide',   masterLabel: '🌟 Master Mix (All Divisions)' }
+  };
+  let operation = localStorage.getItem('timesTrainerOperation') || 'multiply';
 
   const ANSWER_MODES = {
     multiple: { id: 'multiple', label: 'Multiple Choice' },
@@ -568,6 +590,11 @@
   const levelGrid = document.getElementById('level-grid');
   const modeMultipleBtn = document.getElementById('mode-multiple-btn');
   const modeFillBtn = document.getElementById('mode-fill-btn');
+  const opMultiplyBtn = document.getElementById('op-multiply-btn');
+  const opDivideBtn = document.getElementById('op-divide-btn');
+  const scoresOpMultiplyBtn = document.getElementById('scores-op-multiply-btn');
+  const scoresOpDivideBtn = document.getElementById('scores-op-divide-btn');
+  const allscoresSubtitle = document.getElementById('allscores-subtitle');
   const viewScoresBtn = document.getElementById('view-scores-btn');
   const allscoresList = document.getElementById('allscores-list');
   const allscoresBackBtn = document.getElementById('allscores-back-btn');
@@ -617,6 +644,33 @@
   modeMultipleBtn.addEventListener('click', () => setAnswerMode('multiple'));
   modeFillBtn.addEventListener('click', () => setAnswerMode('fill'));
 
+  // ---------- Operation toggle (× or ÷) ----------
+  function renderOpToggle() {
+    opMultiplyBtn.classList.toggle('active', operation === 'multiply');
+    opDivideBtn.classList.toggle('active', operation === 'divide');
+    scoresOpMultiplyBtn.classList.toggle('active', operation === 'multiply');
+    scoresOpDivideBtn.classList.toggle('active', operation === 'divide');
+  }
+
+  function setOperation(op) {
+    operation = op;
+    try { localStorage.setItem('timesTrainerOperation', op); } catch (e) { /* ignore */ }
+    renderOpToggle();
+    buildSelectorScreen();
+    // If the scores screen is the one being looked at, refresh it in place.
+    if (allscoresScreen.classList.contains('active')) renderAllScores();
+  }
+
+  opMultiplyBtn.addEventListener('click', () => setOperation('multiply'));
+  opDivideBtn.addEventListener('click', () => setOperation('divide'));
+  scoresOpMultiplyBtn.addEventListener('click', () => setOperation('multiply'));
+  scoresOpDivideBtn.addEventListener('click', () => setOperation('divide'));
+
+  // The levels for whichever operation is currently selected.
+  function currentLevels() {
+    return LEVELS.filter(l => l.op === operation);
+  }
+
   // ---------- Screen switching ----------
   function showScreen(name) {
     [selectorScreen, allscoresScreen, gameScreen].forEach(s => s.classList.remove('active'));
@@ -628,10 +682,10 @@
   // ---------- Selector screen ----------
   function buildSelectorScreen() {
     levelGrid.innerHTML = '';
-    LEVELS.forEach(level => {
+    currentLevels().forEach(level => {
       const btn = document.createElement('button');
       btn.className = 'level-btn' + (level.type === 'mixed' ? ' master-btn' : '');
-      btn.textContent = level.type === 'mixed' ? '🌟 Master Mix (All Tables)' : level.label;
+      btn.textContent = level.type === 'mixed' ? OPERATIONS[level.op].masterLabel : level.label;
       btn.addEventListener('click', () => startLevel(level));
       levelGrid.appendChild(btn);
     });
@@ -649,13 +703,16 @@
 
   async function renderAllScores() {
     allscoresList.innerHTML = '<div class="loading-text">Loading scores…</div>';
-    const rows = await Promise.all(LEVELS.map(async level => {
+    allscoresSubtitle.textContent = `Best ${OPERATIONS[operation].label.toLowerCase()} time for each level, by mode`;
+    const forOp = operation; // so a toggle mid-load doesn't paint the wrong rows
+    const rows = await Promise.all(currentLevels().map(async level => {
       const [multipleBest, fillBest] = await Promise.all([
         getTopScores(scoreKey(level.id, 'multiple'), 1),
         getTopScores(scoreKey(level.id, 'fill'), 1)
       ]);
       return { level, multipleBest: multipleBest[0] || null, fillBest: fillBest[0] || null };
     }));
+    if (forOp !== operation) return; // user switched while this was loading
     allscoresList.innerHTML = '';
     rows.forEach(({ level, multipleBest, fillBest }) => {
       const row = document.createElement('div');
@@ -663,7 +720,9 @@
 
       const nameSpan = document.createElement('span');
       nameSpan.className = 'level-name';
-      nameSpan.textContent = level.type === 'mixed' ? 'Master Mix' : `${level.label} Table`;
+      nameSpan.textContent = level.type === 'mixed'
+        ? 'Master Mix'
+        : (level.op === 'divide' ? `${level.label}` : `${level.label} Table`);
       row.appendChild(nameSpan);
 
       [multipleBest, fillBest].forEach(best => {
@@ -736,40 +795,64 @@
   }
 
   // ---------- Fact generation ----------
+  // Every fact is stored as {a, b}. For multiply the question is a × b; for
+  // divide it's a ÷ b, and facts are built so the answer always comes out whole.
+  function answerFor(fact, op) {
+    return op === 'divide' ? fact.a / fact.b : fact.a * fact.b;
+  }
+
   function generateFacts(level) {
     if (level.type === 'single') {
       const list = [];
       for (let m = 1; m <= FACTS_PER_ROUND; m++) {
-        list.push({ id: m - 1, a: level.table, b: m });
+        // Dividing by this table: (table × m) ÷ table = m, so every answer is 1-12.
+        list.push(level.op === 'divide'
+          ? { id: m - 1, a: level.table * m, b: level.table }
+          : { id: m - 1, a: level.table, b: m });
       }
       return shuffle(list);
     }
-    // mixed: random facts across all tables 1-12, no duplicate fact (order-independent)
+    // mixed: random facts across all tables 1-12, no duplicate fact
     const seen = new Set();
     const list = [];
     while (list.length < FACTS_PER_ROUND) {
-      const a = Math.floor(Math.random() * 12) + 1;
-      const b = Math.floor(Math.random() * 12) + 1;
-      const key = a <= b ? `${a}-${b}` : `${b}-${a}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      list.push({ id: list.length, a, b });
+      if (level.op === 'divide') {
+        const divisor = Math.floor(Math.random() * 12) + 1;
+        const quotient = Math.floor(Math.random() * 12) + 1;
+        const key = `${divisor}/${quotient}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        list.push({ id: list.length, a: divisor * quotient, b: divisor });
+      } else {
+        const a = Math.floor(Math.random() * 12) + 1;
+        const b = Math.floor(Math.random() * 12) + 1;
+        const key = a <= b ? `${a}-${b}` : `${b}-${a}`;  // 3×4 and 4×3 are one fact
+        if (seen.has(key)) continue;
+        seen.add(key);
+        list.push({ id: list.length, a, b });
+      }
     }
     return list;
   }
 
-  function genOptions(a, b, correct) {
+  function genOptions(a, b, correct, op) {
     const opts = new Set([correct]);
-    const candidates = shuffle([
-      a * (b - 1), a * (b + 1), (a - 1) * b, (a + 1) * b,
-      correct - 1, correct + 1, correct - 2, correct + 2, correct - 10, correct + 10
-    ]);
+
+    // Plausible wrong answers differ by operation. For division the answer is
+    // always 1-12, so near-misses and the divisor itself are the tempting ones.
+    const candidates = op === 'divide'
+      ? shuffle([correct - 1, correct + 1, correct - 2, correct + 2, correct + 3, correct - 3, b, a - b])
+      : shuffle([
+          a * (b - 1), a * (b + 1), (a - 1) * b, (a + 1) * b,
+          correct - 1, correct + 1, correct - 2, correct + 2, correct - 10, correct + 10
+        ]);
+
     for (const c of candidates) {
       if (opts.size >= 4) break;
       if (c > 0 && c !== correct) opts.add(c);
     }
     while (opts.size < 4) {
-      const delta = Math.floor(Math.random() * 10) + 1;
+      const delta = Math.floor(Math.random() * (op === 'divide' ? 5 : 10)) + 1;
       const c = correct + (Math.random() < 0.5 ? -delta : delta);
       if (c > 0 && !opts.has(c)) opts.add(c);
     }
@@ -826,8 +909,8 @@
     locked = false;
     currentId = queue[0];
     const fact = factById[currentId];
-    currentAnswer = fact.a * fact.b;
-    questionEl.textContent = `${fact.a} × ${fact.b} = ?`;
+    currentAnswer = answerFor(fact, currentLevel.op);
+    questionEl.textContent = `${fact.a} ${OPERATIONS[currentLevel.op].symbol} ${fact.b} = ?`;
     feedbackEl.textContent = '';
     feedbackEl.className = '';
 
@@ -843,7 +926,7 @@
     } else {
       fillAnswerEl.style.display = 'none';
       answersEl.style.display = 'grid';
-      const options = genOptions(fact.a, fact.b, currentAnswer);
+      const options = genOptions(fact.a, fact.b, currentAnswer, currentLevel.op);
       answersEl.innerHTML = '';
       options.forEach(opt => {
         const btn = document.createElement('button');
@@ -939,7 +1022,8 @@
     monEmoji.innerHTML = '';
     monEmoji.appendChild(buildMonImage(monIdx, 'mon-img-large'));
     const fact = factById[id];
-    catchText.textContent = `Gotcha! You caught ${MON_NAMES[monIdx]}! (${fact.a} × ${fact.b} = ${fact.a * fact.b})`;
+    const sym = OPERATIONS[currentLevel.op].symbol;
+    catchText.textContent = `Gotcha! You caught ${MON_NAMES[monIdx]}! (${fact.a} ${sym} ${fact.b} = ${answerFor(fact, currentLevel.op)})`;
     caught.push(monIdx);
     updateStats();
     renderCaughtList();
@@ -996,7 +1080,9 @@
       return;
     }
     highscoreBoard.style.display = 'block';
-    const levelLabel = currentLevel.type === 'mixed' ? 'Master Mix' : currentLevel.label + ' Table';
+    const levelLabel = currentLevel.type === 'mixed'
+      ? `Master Mix (${OPERATIONS[currentLevel.op].label})`
+      : currentLevel.title;
     highscoreBoardTitle.textContent = `🏆 Best Times — ${levelLabel} (${ANSWER_MODES[currentRoundMode].label})`;
     scores.forEach(entry => {
       const li = document.createElement('li');
@@ -1074,6 +1160,7 @@
 
   // ---------- Init ----------
   renderModeToggle();
+  renderOpToggle();
   buildSelectorScreen();
   showScreen('selector');
 })();
