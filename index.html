@@ -841,7 +841,7 @@
     // Plausible wrong answers differ by operation. For division the answer is
     // always 1-12, so near-misses and the divisor itself are the tempting ones.
     const candidates = op === 'divide'
-      ? shuffle([correct - 1, correct + 1, correct - 2, correct + 2, correct + 3, correct - 3, b, a - b])
+      ? shuffle([correct - 1, correct + 1, correct - 2, correct + 2, correct + 3, correct - 3, b])
       : shuffle([
           a * (b - 1), a * (b + 1), (a - 1) * b, (a + 1) * b,
           correct - 1, correct + 1, correct - 2, correct + 2, correct - 10, correct + 10
