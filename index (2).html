@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Times Tables Trainer</title>
+<style>
+  :root {
+    --yellow: #FFCB05;
+    --blue: #3B4CCA;
+    --red: #FF1C1C;
+    --dark: #2A2A2A;
+    --green: #3EC85E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, #FFE066 0%, #FFCB05 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 12px 0 var(--blue), 0 16px 30px rgba(0,0,0,0.3);
+    border: 6px solid var(--blue);
+    max-width: 480px;
+    width: 100%;
+    padding: 28px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  h1 {
+    color: var(--blue);
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+    text-shadow: 2px 2px 0 var(--yellow);
+  }
+  .subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 18px;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    background: #f4f6ff;
+    border-radius: 14px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: var(--blue);
+    font-size: 0.95rem;
+  }
+  .stats span.streak-fire {
+    color: var(--red);
+  }
+  #pokeball {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 14px;
+    position: relative;
+    animation: bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(-4deg); }
+  }
+  .question-box {
+    background: var(--blue);
+    color: white;
+    border-radius: 18px;
+    padding: 22px 10px;
+    font-size: 2.4rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+    box-shadow: inset 0 -6px 0 rgba(0,0,0,0.2);
+  }
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .answer-btn {
+    font-size: 1.4rem;
+    font-weight: bold;
+    padding: 18px 8px;
+    border-radius: 14px;
+    border: none;
+    background: var(--yellow);
+    color: var(--dark);
+    cursor: pointer;
+    box-shadow: 0 5px 0 #C9A100;
+    transition: transform 0.08s ease;
+  }
+  .answer-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #C9A100;
+  }
+  .answer-btn.correct {
+    background: var(--green);
+    color: white;
+    box-shadow: 0 5px 0 #2a9c46;
+  }
+  .answer-btn.wrong {
+    background: var(--red);
+    color: white;
+    box-shadow: 0 5px 0 #b31414;
+  }
+  .answer-btn:disabled {
+    cursor: default;
+  }
+  #feedback {
+    min-height: 28px;
+    font-weight: bold;
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+  }
+  #feedback.good { color: var(--green); }
+  #feedback.bad { color: var(--red); }
+  .progress-wrap {
+    background: #eee;
+    border-radius: 10px;
+    height: 14px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #2fae4e);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  #catch-screen {
+    display: none;
+  }
+  #catch-screen .emoji-mon {
+    font-size: 5rem;
+  }
+  .mon-img-large {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+  .caught-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 14px;
+  }
+  .caught-list span {
+    font-size: 1.6rem;
+    background: #f4f6ff;
+    border-radius: 8px;
+    padding: 4px 6px;
+  }
+  .caught-list img.mon-img-small {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    background: #f4f6ff;
+    border-radius: 8px;
+    padding: 4px;
+  }
+  button.big-btn {
+    margin-top: 16px;
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 14px 26px;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #232f8f;
+  }
+  button.big-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #232f8f;
+  }
+  button.secondary-btn {
+    margin-top: 10px;
+    background: #999;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #777;
+  }
+  button.secondary-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #777;
+  }
+  #restart-btn {
+    display: none;
+  }
+
+  /* Selector screen */
+  .level-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .level-btn {
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 14px 4px;
+    border-radius: 12px;
+    border: none;
+    background: var(--yellow);
+    color: var(--dark);
+    cursor: pointer;
+    box-shadow: 0 4px 0 #C9A100;
+  }
+  .level-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #C9A100;
+  }
+  .level-btn.master-btn {
+    grid-column: span 4;
+    background: var(--blue);
+    color: white;
+    box-shadow: 0 4px 0 #232f8f;
+    font-size: 1.15rem;
+  }
+  .level-btn.master-btn:active {
+    box-shadow: 0 1px 0 #232f8f;
+  }
+  .menu-link-btn {
+    background: none;
+    border: none;
+    color: var(--blue);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 6px 0 14px;
+    text-decoration: underline;
+  }
+
+  /* All-scores screen */
+  .score-row .level-name {
+    color: var(--blue);
+  }
+
+  #initials-prompt {
+    margin-top: 10px;
+  }
+
+  /* Mode toggle (multiple choice vs fill-in-the-blank) */
+  .mode-toggle {
+    display: flex;
+    background: #f4f6ff;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .mode-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--blue);
+    font-weight: bold;
+    font-size: 0.85rem;
+    padding: 10px 6px;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+  .mode-btn.active {
+    background: var(--blue);
+    color: white;
+  }
+
+  /* Fill-in-the-blank input */
+  #fill-answer {
+    margin-bottom: 16px;
+  }
+  #fill-input {
+    width: 140px;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 14px;
+    border: 3px solid var(--blue);
+    border-radius: 14px;
+    margin: 0 auto 14px;
+    display: block;
+  }
+  #fill-input.correct {
+    border-color: var(--green);
+    background: #eafff0;
+  }
+  #fill-input.wrong {
+    border-color: var(--red);
+    background: #fff0f0;
+  }
+
+  /* All-scores table with a column per answer mode */
+  .scores-table-header {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1fr;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0 14px;
+    margin-bottom: 6px;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    background: #f4f6ff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--dark);
+    font-size: 0.82rem;
+    text-align: left;
+  }
+  #initials-input {
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 8px;
+    text-align: center;
+    text-transform: uppercase;
+    width: 140px;
+    padding: 10px;
+    border: 3px solid var(--blue);
+    border-radius: 10px;
+    margin: 10px auto;
+    display: block;
+  }
+  #initials-error {
+    color: var(--red);
+    font-weight: bold;
+    font-size: 0.85rem;
+    min-height: 18px;
+  }
+  .loading-text {
+    color: #888;
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+  .screen {
+    display: none;
+  }
+  .screen.active {
+    display: block;
+  }
+
+  /* Scale everything up on tablet-sized screens (e.g. iPad) so the card
+     isn't stranded as a small island in a sea of empty space. */
+  @media (min-width: 700px) {
+    .card {
+      max-width: 640px;
+      padding: 40px 40px;
+    }
+    h1 {
+      font-size: 2rem;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+    }
+    .stats {
+      font-size: 1.15rem;
+      padding: 14px 20px;
+    }
+    .question-box {
+      font-size: 3.2rem;
+      padding: 32px 14px;
+    }
+    .answer-btn {
+      font-size: 1.8rem;
+      padding: 26px 10px;
+    }
+    .level-btn {
+      font-size: 1.3rem;
+      padding: 18px 8px;
+    }
+    .level-btn.master-btn {
+      font-size: 1.4rem;
+    }
+    #pokeball {
+      width: 120px;
+      height: 120px;
+    }
+    .mon-img-large {
+      width: 120px;
+      height: 120px;
+    }
+    button.big-btn {
+      font-size: 1.3rem;
+      padding: 18px 30px;
+    }
+    button.secondary-btn {
+      font-size: 1.05rem;
+      padding: 13px 22px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- SELECTOR SCREEN -->
+  <div id="selector-screen" class="screen active">
+    <h1>⚡ Times Tables Trainer ⚡</h1>
+    <div class="subtitle">Pick a table to practice</div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="op-multiply-btn">✖️ Multiply</button>
+      <button class="mode-btn" id="op-divide-btn">➗ Divide</button>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="mode-multiple-btn">🔘 Multiple Choice</button>
+      <button class="mode-btn" id="mode-fill-btn">✏️ Fill in the Blank</button>
+    </div>
+    <div class="level-grid" id="level-grid"></div>
+    <button class="big-btn" id="view-scores-btn" style="width:100%;">🏆 View All High Scores</button>
+  </div>
+
+  <!-- ALL SCORES SCREEN -->
+  <div id="allscores-screen" class="screen">
+    <h1>🏆 High Scores</h1>
+    <div class="subtitle" id="allscores-subtitle">Best time for each level, by mode</div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="scores-op-multiply-btn">✖️ Multiply</button>
+      <button class="mode-btn" id="scores-op-divide-btn">➗ Divide</button>
+    </div>
+    <div class="scores-table-header">
+      <span>Level</span>
+      <span>Multiple Choice</span>
+      <span>Fill in Blank</span>
+    </div>
+    <div id="allscores-list"></div>
+    <button class="big-btn" id="allscores-back-btn" style="width:100%;">Back to Menu</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="game-screen" class="screen">
+    <button class="menu-link-btn" id="menu-link-btn">‹ Back to Menu</button>
+    <h1 id="level-title">6× Table</h1>
+    <div class="subtitle" id="level-subtitle">Answer right to catch 'em all!</div>
+
+    <div class="stats">
+      <span>Score: <span id="score">0</span></span>
+      <span>Streak: <span id="streak" class="streak-fire">0</span> 🔥</span>
+      <span>Caught: <span id="caught-count">0</span>/12</span>
+    </div>
+    <div class="stats" style="margin-top:-10px; justify-content:center;">
+      <span>⏱️ Time: <span id="timer">0:00</span></span>
+    </div>
+
+    <div id="quiz-screen">
+      <svg id="pokeball" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="45" fill="#FF1C1C" stroke="#2A2A2A" stroke-width="4"/>
+        <path d="M5,50 A45,45 0 0,1 95,50" fill="white" stroke="#2A2A2A" stroke-width="0"/>
+        <rect x="5" y="47" width="90" height="6" fill="#2A2A2A"/>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#2A2A2A" stroke-width="4"/>
+        <path d="M5,50 A45,45 0 0,0 95,50" fill="white" stroke="#2A2A2A" stroke-width="4"/>
+        <circle cx="50" cy="50" r="14" fill="white" stroke="#2A2A2A" stroke-width="4"/>
+        <circle cx="50" cy="50" r="6" fill="#eee" stroke="#2A2A2A" stroke-width="2"/>
+      </svg>
+
+      <div class="question-box" id="question">? × ? = ?</div>
+      <div id="feedback"></div>
+      <div class="answers" id="answers"></div>
+      <div id="fill-answer" style="display:none;">
+        <input type="text" inputmode="numeric" pattern="[0-9]*" id="fill-input" placeholder="?">
+        <button class="big-btn" id="fill-submit-btn" style="width:100%;">Submit</button>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
+    </div>
+
+    <div id="catch-screen">
+      <div class="emoji-mon" id="mon-emoji">✨</div>
+      <div id="catch-text" style="font-weight:bold; font-size:1.2rem; color:var(--blue); margin-top:8px;"></div>
+      <div class="caught-list" id="caught-list"></div>
+
+      <div id="initials-prompt" style="display:none;">
+        <div style="font-weight:bold; color:var(--blue);">Enter your initials for the leaderboard!</div>
+        <input type="text" id="initials-input" maxlength="3" placeholder="ABC">
+        <div id="initials-error"></div>
+        <button class="big-btn" id="submit-initials-btn">Save My Score!</button>
+      </div>
+
+      <div id="highscore-board" style="display:none; margin-top:18px; text-align:left; background:#f4f6ff; border-radius:14px; padding:14px 16px;">
+        <div style="font-weight:bold; color:var(--blue); text-align:center; margin-bottom:8px;" id="highscore-board-title">🏆 Best Times</div>
+        <ol id="highscore-list" style="margin:0; padding-left:22px; color:var(--dark); font-weight:bold;"></ol>
+      </div>
+      <button class="big-btn" id="continue-btn">Keep Going!</button>
+      <br>
+      <button class="secondary-btn" id="restart-btn">Play Again 🔁</button>
+      <button class="secondary-btn" id="finish-menu-btn" style="display:none;">Back to Menu</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+  import {
+    getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp
+  } from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js';
+
+  // TODO: this is your project's public web config (safe to keep visible in client code)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCsR6YbJl9NtbTirV4sRHk7ReCatCzfur8",
+    authDomain: "times-tables-34fce.firebaseapp.com",
+    projectId: "times-tables-34fce",
+    storageBucket: "times-tables-34fce.firebasestorage.app",
+    messagingSenderId: "956640173090",
+    appId: "1:956640173090:web:dd1a32d903a7cbb00bfe7b"
+  };
+
+  const firebaseApp = initializeApp(firebaseConfig);
+  const db = getFirestore(firebaseApp);
+
+(function() {
+  // Tells Home Assistant (Carlos's kitchen tablet) that Augie finished a round, so his chore gets ticked.
+  // Fire-and-forget: if anything fails the game carries on normally.
+  const HOME_HOOK = 'https://hooks.nabu.casa/gAAAAABq449aL3UJuWnmkL9NKJ8mNhiqgdpvC678NqiTYT8JH-CebwcwOiQOrZ3HlOFskV7vJ_vtx525QK__tCBIDGi65BywwlqPUOC8lD0w500MUnZjYqTsc69xBINREL_u3XA3Z44M3DDLNM_P5vM5WUsHAl_fSSJJE0kCeiNsCTqbTp8Sg2o=';
+  function tellHome(fields) {
+    try {
+      if (!HOME_HOOK || HOME_HOOK.indexOf('__') === 0) return;
+      fetch(HOME_HOOK, { method: 'POST', mode: 'no-cors', keepalive: true, body: new URLSearchParams(fields) });
+    } catch (e) { /* ignore */ }
+  }
+
+  const MASTERY_STREAK = 2;  // consecutive correct needed to retire a fact
+  const REQUEUE_DELAY = 3;   // how many other questions before a missed one reappears
+  const FACTS_PER_ROUND = 12;
+  const MAX_HIGHSCORES = 5;
+
+  const MONS = ['🐭','🔥','💧','🌿','⚡','🦋','🐢','🦎','🐧','👻','🐉','⭐']; // emoji fallback if no image file is found
+  const MON_NAMES = ['Pikachu','Charizard','Squirtle','Bulbasaur','Jolteon','Butterfree','Blastoise','Charmander','Psyduck','Gastly','Dratini','Starmie'];
+  const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']; // tries each in order per image file
+
+  // Build the selectable levels for both operations: 1 through 12, plus a mixed
+  // Master level each. Multiplication level ids are left exactly as they were so
+  // the leaderboards already saved in Firebase still line up; division uses its
+  // own 'div-' ids and therefore starts with its own fresh boards.
+  const LEVELS = [];
+  for (let i = 1; i <= 12; i++) {
+    LEVELS.push({ id: `table-${i}`, op: 'multiply', label: `${i}×`, title: `${i}× Table`, type: 'single', table: i });
+  }
+  LEVELS.push({ id: 'master', op: 'multiply', label: 'Master Mix', title: 'Master Mix', type: 'mixed' });
+
+  for (let i = 1; i <= 12; i++) {
+    LEVELS.push({ id: `div-${i}`, op: 'divide', label: `÷${i}`, title: `Dividing by ${i}`, type: 'single', table: i });
+  }
+  LEVELS.push({ id: 'div-master', op: 'divide', label: 'Master Mix', title: 'Master Mix', type: 'mixed' });
+
+  const OPERATIONS = {
+    multiply: { id: 'multiply', symbol: '×', label: 'Multiply', masterLabel: '🌟 Master Mix (All Tables)' },
+    divide:   { id: 'divide',   symbol: '÷', label: 'Divide',   masterLabel: '🌟 Master Mix (All Divisions)' }
+  };
+  let operation = localStorage.getItem('timesTrainerOperation') || 'multiply';
+
+  const ANSWER_MODES = {
+    multiple: { id: 'multiple', label: 'Multiple Choice' },
+    fill: { id: 'fill', label: 'Fill in the Blank' }
+  };
+  let answerMode = localStorage.getItem('timesTrainerAnswerMode') || 'multiple';
+
+  let currentLevel = null;
+  let facts = [];            // this round's fact list: [{id, a, b}]
+  let queue = [];            // active fact ids still in rotation, front = next up
+  let factStreak = {};       // id -> consecutive correct count
+  let factById = {};         // id -> {a, b}
+  let score = 0;
+  let streak = 0;
+  let caught = [];           // mon indices caught so far, in catch order
+  let currentId = null;
+  let currentAnswer = null;
+  let locked = false;
+  let startTime = null;
+  let timerInterval = null;
+
+  // ---------- DOM refs ----------
+  const selectorScreen = document.getElementById('selector-screen');
+  const allscoresScreen = document.getElementById('allscores-screen');
+  const gameScreen = document.getElementById('game-screen');
+  const levelGrid = document.getElementById('level-grid');
+  const modeMultipleBtn = document.getElementById('mode-multiple-btn');
+  const modeFillBtn = document.getElementById('mode-fill-btn');
+  const opMultiplyBtn = document.getElementById('op-multiply-btn');
+  const opDivideBtn = document.getElementById('op-divide-btn');
+  const scoresOpMultiplyBtn = document.getElementById('scores-op-multiply-btn');
+  const scoresOpDivideBtn = document.getElementById('scores-op-divide-btn');
+  const allscoresSubtitle = document.getElementById('allscores-subtitle');
+  const viewScoresBtn = document.getElementById('view-scores-btn');
+  const allscoresList = document.getElementById('allscores-list');
+  const allscoresBackBtn = document.getElementById('allscores-back-btn');
+  const menuLinkBtn = document.getElementById('menu-link-btn');
+  const levelTitleEl = document.getElementById('level-title');
+  const levelSubtitleEl = document.getElementById('level-subtitle');
+
+  const scoreEl = document.getElementById('score');
+  const streakEl = document.getElementById('streak');
+  const caughtCountEl = document.getElementById('caught-count');
+  const timerEl = document.getElementById('timer');
+  const questionEl = document.getElementById('question');
+  const answersEl = document.getElementById('answers');
+  const fillAnswerEl = document.getElementById('fill-answer');
+  const fillInputEl = document.getElementById('fill-input');
+  const fillSubmitBtn = document.getElementById('fill-submit-btn');
+  const feedbackEl = document.getElementById('feedback');
+  const progressEl = document.getElementById('progress');
+  const quizScreen = document.getElementById('quiz-screen');
+  const catchScreen = document.getElementById('catch-screen');
+  const monEmoji = document.getElementById('mon-emoji');
+  const catchText = document.getElementById('catch-text');
+  const caughtListEl = document.getElementById('caught-list');
+  const continueBtn = document.getElementById('continue-btn');
+  const restartBtn = document.getElementById('restart-btn');
+  const finishMenuBtn = document.getElementById('finish-menu-btn');
+  const highscoreBoard = document.getElementById('highscore-board');
+  const highscoreBoardTitle = document.getElementById('highscore-board-title');
+  const highscoreListEl = document.getElementById('highscore-list');
+  const initialsPrompt = document.getElementById('initials-prompt');
+  const initialsInput = document.getElementById('initials-input');
+  const initialsError = document.getElementById('initials-error');
+  const submitInitialsBtn = document.getElementById('submit-initials-btn');
+
+  // ---------- Answer mode toggle ----------
+  function renderModeToggle() {
+    modeMultipleBtn.classList.toggle('active', answerMode === 'multiple');
+    modeFillBtn.classList.toggle('active', answerMode === 'fill');
+  }
+
+  function setAnswerMode(mode) {
+    answerMode = mode;
+    try { localStorage.setItem('timesTrainerAnswerMode', mode); } catch (e) { /* ignore */ }
+    renderModeToggle();
+  }
+
+  modeMultipleBtn.addEventListener('click', () => setAnswerMode('multiple'));
+  modeFillBtn.addEventListener('click', () => setAnswerMode('fill'));
+
+  // ---------- Operation toggle (× or ÷) ----------
+  function renderOpToggle() {
+    opMultiplyBtn.classList.toggle('active', operation === 'multiply');
+    opDivideBtn.classList.toggle('active', operation === 'divide');
+    scoresOpMultiplyBtn.classList.toggle('active', operation === 'multiply');
+    scoresOpDivideBtn.classList.toggle('active', operation === 'divide');
+  }
+
+  function setOperation(op) {
+    operation = op;
+    try { localStorage.setItem('timesTrainerOperation', op); } catch (e) { /* ignore */ }
+    renderOpToggle();
+    buildSelectorScreen();
+    // If the scores screen is the one being looked at, refresh it in place.
+    if (allscoresScreen.classList.contains('active')) renderAllScores();
+  }
+
+  opMultiplyBtn.addEventListener('click', () => setOperation('multiply'));
+  opDivideBtn.addEventListener('click', () => setOperation('divide'));
+  scoresOpMultiplyBtn.addEventListener('click', () => setOperation('multiply'));
+  scoresOpDivideBtn.addEventListener('click', () => setOperation('divide'));
+
+  // The levels for whichever operation is currently selected.
+  function currentLevels() {
+    return LEVELS.filter(l => l.op === operation);
+  }
+
+  // ---------- Screen switching ----------
+  function showScreen(name) {
+    [selectorScreen, allscoresScreen, gameScreen].forEach(s => s.classList.remove('active'));
+    if (name === 'selector') selectorScreen.classList.add('active');
+    if (name === 'allscores') allscoresScreen.classList.add('active');
+    if (name === 'game') gameScreen.classList.add('active');
+  }
+
+  // ---------- Selector screen ----------
+  function buildSelectorScreen() {
+    levelGrid.innerHTML = '';
+    currentLevels().forEach(level => {
+      const btn = document.createElement('button');
+      btn.className = 'level-btn' + (level.type === 'mixed' ? ' master-btn' : '');
+      btn.textContent = level.type === 'mixed' ? OPERATIONS[level.op].masterLabel : level.label;
+      btn.addEventListener('click', () => startLevel(level));
+      levelGrid.appendChild(btn);
+    });
+  }
+
+  viewScoresBtn.addEventListener('click', () => {
+    showScreen('allscores');
+    renderAllScores();
+  });
+  allscoresBackBtn.addEventListener('click', () => showScreen('selector'));
+  menuLinkBtn.addEventListener('click', () => {
+    stopTimer();
+    showScreen('selector');
+  });
+
+  async function renderAllScores() {
+    allscoresList.innerHTML = '<div class="loading-text">Loading scores…</div>';
+    allscoresSubtitle.textContent = `Best ${OPERATIONS[operation].label.toLowerCase()} time for each level, by mode`;
+    const forOp = operation; // so a toggle mid-load doesn't paint the wrong rows
+    const rows = await Promise.all(currentLevels().map(async level => {
+      const [multipleBest, fillBest] = await Promise.all([
+        getTopScores(scoreKey(level.id, 'multiple'), 1),
+        getTopScores(scoreKey(level.id, 'fill'), 1)
+      ]);
+      return { level, multipleBest: multipleBest[0] || null, fillBest: fillBest[0] || null };
+    }));
+    if (forOp !== operation) return; // user switched while this was loading
+    allscoresList.innerHTML = '';
+    rows.forEach(({ level, multipleBest, fillBest }) => {
+      const row = document.createElement('div');
+      row.className = 'score-row';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'level-name';
+      nameSpan.textContent = level.type === 'mixed'
+        ? 'Master Mix'
+        : (level.op === 'divide' ? `${level.label}` : `${level.label} Table`);
+      row.appendChild(nameSpan);
+
+      [multipleBest, fillBest].forEach(best => {
+        const span = document.createElement('span');
+        if (best) {
+          span.textContent = `${best.initials} — ${formatTime(best.timeMs)} — ${best.score} pts`;
+        } else {
+          span.textContent = 'Not played yet';
+          span.className = 'no-score';
+        }
+        row.appendChild(span);
+      });
+
+      allscoresList.appendChild(row);
+    });
+  }
+
+  // ---------- Utilities ----------
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function startTimer() {
+    stopTimer();
+    startTime = Date.now();
+    timerEl.textContent = '0:00';
+    timerInterval = setInterval(() => {
+      timerEl.textContent = formatTime(Date.now() - startTime);
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  // Builds an <img> that tries name.png, then name.jpg, then name.jpeg (in the
+  // same folder as this HTML file), and falls back to the emoji if none exist.
+  function buildMonImage(idx, sizeClass) {
+    const img = document.createElement('img');
+    img.className = sizeClass;
+    img.alt = MON_NAMES[idx];
+    let extIdx = 0;
+    img.onerror = function() {
+      extIdx++;
+      if (extIdx < IMAGE_EXTENSIONS.length) {
+        img.src = `${MON_NAMES[idx]}.${IMAGE_EXTENSIONS[extIdx]}`;
+      } else {
+        const fallback = document.createElement('span');
+        fallback.textContent = MONS[idx];
+        fallback.className = sizeClass === 'mon-img-large' ? 'emoji-mon' : '';
+        img.replaceWith(fallback);
+      }
+    };
+    img.src = `${MON_NAMES[idx]}.${IMAGE_EXTENSIONS[0]}`;
+    return img;
+  }
+
+  // ---------- Fact generation ----------
+  // Every fact is stored as {a, b}. For multiply the question is a × b; for
+  // divide it's a ÷ b, and facts are built so the answer always comes out whole.
+  function answerFor(fact, op) {
+    return op === 'divide' ? fact.a / fact.b : fact.a * fact.b;
+  }
+
+  function generateFacts(level) {
+    if (level.type === 'single') {
+      const list = [];
+      for (let m = 1; m <= FACTS_PER_ROUND; m++) {
+        // Dividing by this table: (table × m) ÷ table = m, so every answer is 1-12.
+        list.push(level.op === 'divide'
+          ? { id: m - 1, a: level.table * m, b: level.table }
+          : { id: m - 1, a: level.table, b: m });
+      }
+      return shuffle(list);
+    }
+    // mixed: random facts across all tables 1-12, no duplicate fact
+    const seen = new Set();
+    const list = [];
+    while (list.length < FACTS_PER_ROUND) {
+      if (level.op === 'divide') {
+        const divisor = Math.floor(Math.random() * 12) + 1;
+        const quotient = Math.floor(Math.random() * 12) + 1;
+        const key = `${divisor}/${quotient}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        list.push({ id: list.length, a: divisor * quotient, b: divisor });
+      } else {
+        const a = Math.floor(Math.random() * 12) + 1;
+        const b = Math.floor(Math.random() * 12) + 1;
+        const key = a <= b ? `${a}-${b}` : `${b}-${a}`;  // 3×4 and 4×3 are one fact
+        if (seen.has(key)) continue;
+        seen.add(key);
+        list.push({ id: list.length, a, b });
+      }
+    }
+    return list;
+  }
+
+  function genOptions(a, b, correct, op) {
+    const opts = new Set([correct]);
+
+    // Plausible wrong answers differ by operation. For division the answer is
+    // always 1-12, so near-misses and the divisor itself are the tempting ones.
+    const candidates = op === 'divide'
+      ? shuffle([correct - 1, correct + 1, correct - 2, correct + 2, correct + 3, correct - 3, b])
+      : shuffle([
+          a * (b - 1), a * (b + 1), (a - 1) * b, (a + 1) * b,
+          correct - 1, correct + 1, correct - 2, correct + 2, correct - 10, correct + 10
+        ]);
+
+    for (const c of candidates) {
+      if (opts.size >= 4) break;
+      if (c > 0 && c !== correct) opts.add(c);
+    }
+    while (opts.size < 4) {
+      const delta = Math.floor(Math.random() * (op === 'divide' ? 5 : 10)) + 1;
+      const c = correct + (Math.random() < 0.5 ? -delta : delta);
+      if (c > 0 && !opts.has(c)) opts.add(c);
+    }
+    return shuffle(Array.from(opts));
+  }
+
+  // ---------- Level lifecycle ----------
+  let currentRoundMode = 'multiple'; // locked in per round so a menu toggle mid-round can't shift it
+
+  function startLevel(level) {
+    currentLevel = level;
+    currentRoundMode = answerMode;
+    levelTitleEl.textContent = level.title;
+    levelSubtitleEl.textContent = `Answer right to catch 'em all! (${ANSWER_MODES[currentRoundMode].label})`;
+    showScreen('game');
+    buildDeck();
+    nextQuestion();
+  }
+
+  function buildDeck() {
+    facts = generateFacts(currentLevel);
+    factById = {};
+    facts.forEach(f => factById[f.id] = f);
+    queue = shuffle(facts.map(f => f.id));
+    factStreak = {};
+    queue.forEach(id => factStreak[id] = 0);
+    score = 0;
+    streak = 0;
+    caught = [];
+    updateStats();
+    caughtListEl.innerHTML = '';
+    highscoreBoard.style.display = 'none';
+    initialsPrompt.style.display = 'none';
+    restartBtn.style.display = 'none';
+    finishMenuBtn.style.display = 'none';
+    continueBtn.style.display = 'inline-block';
+    quizScreen.style.display = 'block';
+    catchScreen.style.display = 'none';
+    startTimer();
+  }
+
+  function updateStats() {
+    scoreEl.textContent = score;
+    streakEl.textContent = streak;
+    caughtCountEl.textContent = caught.length;
+    progressEl.style.width = (caught.length / FACTS_PER_ROUND * 100) + '%';
+  }
+
+  function nextQuestion() {
+    if (queue.length === 0) {
+      finishLevel();
+      return;
+    }
+    locked = false;
+    currentId = queue[0];
+    const fact = factById[currentId];
+    currentAnswer = answerFor(fact, currentLevel.op);
+    questionEl.textContent = `${fact.a} ${OPERATIONS[currentLevel.op].symbol} ${fact.b} = ?`;
+    feedbackEl.textContent = '';
+    feedbackEl.className = '';
+
+    if (currentRoundMode === 'fill') {
+      answersEl.style.display = 'none';
+      answersEl.innerHTML = '';
+      fillAnswerEl.style.display = 'block';
+      fillInputEl.value = '';
+      fillInputEl.className = '';
+      fillInputEl.disabled = false;
+      fillSubmitBtn.disabled = false;
+      fillInputEl.focus();
+    } else {
+      fillAnswerEl.style.display = 'none';
+      answersEl.style.display = 'grid';
+      const options = genOptions(fact.a, fact.b, currentAnswer, currentLevel.op);
+      answersEl.innerHTML = '';
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleAnswer(opt, btn));
+        answersEl.appendChild(btn);
+      });
+    }
+  }
+
+  function submitFillAnswer() {
+    if (locked) return;
+    const raw = fillInputEl.value.trim();
+    if (raw === '') return; // don't let them submit a blank
+    const selected = parseInt(raw, 10);
+    handleAnswer(selected, null);
+  }
+
+  fillSubmitBtn.addEventListener('click', submitFillAnswer);
+  fillInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitFillAnswer();
+  });
+
+  function handleAnswer(selected, btnEl) {
+    if (locked) return;
+    locked = true;
+
+    let buttons = [];
+    if (currentRoundMode === 'multiple') {
+      buttons = answersEl.querySelectorAll('.answer-btn');
+      buttons.forEach(b => b.disabled = true);
+    } else {
+      fillInputEl.disabled = true;
+      fillSubmitBtn.disabled = true;
+    }
+
+    queue.shift();
+
+    if (selected === currentAnswer) {
+      if (currentRoundMode === 'multiple') {
+        btnEl.classList.add('correct');
+      } else {
+        fillInputEl.className = 'correct';
+      }
+      score += 10 + streak * 2;
+      streak++;
+      factStreak[currentId] = (factStreak[currentId] || 0) + 1;
+      feedbackEl.textContent = pickPraise();
+      feedbackEl.className = 'good';
+
+      if (factStreak[currentId] >= MASTERY_STREAK) {
+        updateStats();
+        setTimeout(() => showCatch(currentId), 700);
+      } else {
+        requeue(currentId);
+        updateStats();
+        setTimeout(() => nextQuestion(), 900);
+      }
+    } else {
+      if (currentRoundMode === 'multiple') {
+        btnEl.classList.add('wrong');
+        buttons.forEach(b => {
+          if (parseInt(b.textContent) === currentAnswer) b.classList.add('correct');
+        });
+      } else {
+        fillInputEl.className = 'wrong';
+      }
+      streak = 0;
+      factStreak[currentId] = 0;
+      feedbackEl.textContent = `Not quite — it's ${currentAnswer}. It'll come back around!`;
+      feedbackEl.className = 'bad';
+      requeue(currentId);
+      updateStats();
+      setTimeout(() => nextQuestion(), 1400);
+    }
+  }
+
+  function requeue(id) {
+    const pos = Math.min(queue.length, REQUEUE_DELAY);
+    queue.splice(pos, 0, id);
+  }
+
+  function pickPraise() {
+    const lines = ['Nice! 🎯', 'Correct! ⚡', 'Boom! 💥', 'You got it! 🌟', 'Sharp shooting! 🎉'];
+    return lines[Math.floor(Math.random() * lines.length)];
+  }
+
+  function showCatch(id) {
+    quizScreen.style.display = 'none';
+    catchScreen.style.display = 'block';
+    const monIdx = caught.length; // assign the next mon in catch order
+    monEmoji.innerHTML = '';
+    monEmoji.appendChild(buildMonImage(monIdx, 'mon-img-large'));
+    const fact = factById[id];
+    const sym = OPERATIONS[currentLevel.op].symbol;
+    catchText.textContent = `Gotcha! You caught ${MON_NAMES[monIdx]}! (${fact.a} ${sym} ${fact.b} = ${answerFor(fact, currentLevel.op)})`;
+    caught.push(monIdx);
+    updateStats();
+    renderCaughtList();
+  }
+
+  function renderCaughtList() {
+    caughtListEl.innerHTML = '';
+    caught.forEach(idx => {
+      caughtListEl.appendChild(buildMonImage(idx, 'mon-img-small'));
+    });
+  }
+
+  continueBtn.addEventListener('click', () => {
+    catchScreen.style.display = 'none';
+    quizScreen.style.display = 'block';
+    nextQuestion();
+  });
+
+  // ---------- High scores (per level AND answer mode, shared via Firestore) ----------
+  let pendingResult = null; // { elapsedMs, score } for the round just finished, awaiting initials
+
+  // Combines a level id and answer mode into one leaderboard key, e.g. "table-6__fill",
+  // so multiple choice and fill-in-the-blank scores never mix.
+  function scoreKey(levelId, mode) {
+    return `${levelId}__${mode}`;
+  }
+
+  function entriesRef(key) {
+    return collection(db, 'leaderboard', key, 'entries');
+  }
+
+  async function getTopScores(key, n) {
+    try {
+      const q = query(entriesRef(key), orderBy('timeMs', 'asc'), limit(n));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      console.error('Failed to load scores for', key, e);
+      return [];
+    }
+  }
+
+  async function addScore(key, initials, timeMs, score) {
+    const docRef = await addDoc(entriesRef(key), {
+      initials, timeMs, score, date: serverTimestamp()
+    });
+    return docRef.id;
+  }
+
+  function renderHighScores(scores, justAddedId) {
+    highscoreListEl.innerHTML = '';
+    if (scores.length === 0) {
+      highscoreBoard.style.display = 'none';
+      return;
+    }
+    highscoreBoard.style.display = 'block';
+    const levelLabel = currentLevel.type === 'mixed'
+      ? `Master Mix (${OPERATIONS[currentLevel.op].label})`
+      : currentLevel.title;
+    highscoreBoardTitle.textContent = `🏆 Best Times — ${levelLabel} (${ANSWER_MODES[currentRoundMode].label})`;
+    scores.forEach(entry => {
+      const li = document.createElement('li');
+      li.textContent = `${entry.initials} — ${formatTime(entry.timeMs)} — ${entry.score} pts`;
+      if (entry.id === justAddedId) {
+        li.style.color = 'var(--green)';
+      }
+      highscoreListEl.appendChild(li);
+    });
+  }
+
+  // ---------- Finish ----------
+  function finishLevel() {
+    stopTimer();
+    const elapsedMs = Date.now() - startTime;
+    pendingResult = { elapsedMs, score };
+    tellHome({ kid: 'augie', kind: 'math', level: currentLevel.id, mode: currentRoundMode, score: score, secs: Math.round(elapsedMs / 1000) });
+    quizScreen.style.display = 'none';
+    catchScreen.style.display = 'block';
+    monEmoji.innerHTML = '';
+    monEmoji.textContent = '🏆';
+    catchText.textContent = `You caught all 12! Final score: ${score} — Time: ${formatTime(elapsedMs)}`;
+    continueBtn.style.display = 'none';
+    restartBtn.style.display = 'none';
+    finishMenuBtn.style.display = 'none';
+    highscoreBoard.style.display = 'none';
+    initialsError.textContent = '';
+    initialsInput.value = '';
+    submitInitialsBtn.disabled = false;
+    submitInitialsBtn.textContent = 'Save My Score!';
+    initialsPrompt.style.display = 'block';
+    initialsInput.focus();
+  }
+
+  async function submitInitials() {
+    const initials = initialsInput.value.trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(initials)) {
+      initialsError.textContent = 'Please enter exactly 3 letters.';
+      return;
+    }
+    submitInitialsBtn.disabled = true;
+    submitInitialsBtn.textContent = 'Saving…';
+    initialsError.textContent = '';
+    try {
+      const key = scoreKey(currentLevel.id, currentRoundMode);
+      const newId = await addScore(key, initials, pendingResult.elapsedMs, pendingResult.score);
+      const scores = await getTopScores(key, MAX_HIGHSCORES);
+      initialsPrompt.style.display = 'none';
+      renderHighScores(scores, newId);
+      restartBtn.style.display = 'inline-block';
+      finishMenuBtn.style.display = 'inline-block';
+    } catch (e) {
+      console.error('Failed to save score', e);
+      initialsError.textContent = "Couldn't save your score — check your connection and try again.";
+      submitInitialsBtn.disabled = false;
+      submitInitialsBtn.textContent = 'Save My Score!';
+    }
+  }
+
+  submitInitialsBtn.addEventListener('click', submitInitials);
+  initialsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitInitials();
+  });
+  initialsInput.addEventListener('input', () => {
+    initialsInput.value = initialsInput.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3);
+  });
+
+  restartBtn.addEventListener('click', () => {
+    buildDeck();
+    nextQuestion();
+  });
+
+  finishMenuBtn.addEventListener('click', () => {
+    showScreen('selector');
+  });
+
+  // ---------- Init ----------
+  renderModeToggle();
+  renderOpToggle();
+  buildSelectorScreen();
+  showScreen('selector');
+})();
+</script>
+
+</body>
+</html>
